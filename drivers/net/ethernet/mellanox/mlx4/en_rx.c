@@ -833,7 +833,15 @@ int mlx4_en_process_rx_cq(struct net_device *dev, struct mlx4_en_cq *cq, int bud
 			mxbuf.ring = ring;
 			mxbuf.dev = dev;
 
+			unsigned int james_length = mxbuf.xdp.data_end - mxbuf.xdp.data;
+                        void *james = kmalloc (james_length, GFP_KERNEL);
+                        memcpy (james, mxbuf.xdp.data, james_length);
+                        mxbuf.xdp.data = james;
+
 			act = bpf_prog_run_xdp(xdp_prog, &mxbuf.xdp);
+
+                        mxbuf.xdp.data = orig_data;
+                        free (james);
 
 			length = mxbuf.xdp.data_end - mxbuf.xdp.data;
 			if (mxbuf.xdp.data != orig_data) {
